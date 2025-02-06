@@ -3,8 +3,8 @@ import { TypeToDoItem } from '../types/types';
 
 interface Props {
 	todo: TypeToDoItem;
-	onComplete: (id: number) => void;
-	onRemove: (id: number) => void;
+	onComplete: (id: string) => void;
+	onRemove: (id: string) => void;
 }
 
 export const ToDoItem = observer(({ todo, onComplete, onRemove }: Props) => {

@@ -1,24 +1,25 @@
 import { makeAutoObservable } from 'mobx';
 import { TypeToDoItem } from '../types/types';
+import { v4 as uuidv4 } from 'uuid';
 
 class TodoStore {
 	todos: TypeToDoItem[] = [
 		{
-			id: 1,
+			id: '1',
 			title: 'Test 1',
 			description: 'This is a test 1 description',
 			completed: false,
 			type: 'main',
 			subtasks: [
 				{
-					id: 4,
+					id: '4',
 					title: 'test4',
 					completed: false,
 					description: 'subtask for task 1',
 					type: 'sub',
 				},
 				{
-					id: 5,
+					id: '5',
 					title: 'test5',
 					completed: false,
 					type: 'sub',
@@ -26,24 +27,39 @@ class TodoStore {
 			],
 		},
 		{
-			id: 2,
+			id: '2',
 			title: 'Test 2',
 			description: 'Test 2 desc',
 			type: 'main',
 			completed: false,
 		},
-		{ id: 3, title: 'Test 3', type: 'main', completed: true },
+		{ id: '3', title: 'Test 3', type: 'main', completed: true },
 	];
 
 	constructor() {
 		makeAutoObservable(this);
 	}
 
-	addTodo = (todo: TypeToDoItem) => {
-		this.todos.push(todo);
+	/**
+	 * A function for adding new todo to MobX, default 'main' subtask
+	 * @param title the title of todo
+	 * @param description description for todo
+	 */
+	addTodo = (title: string, description?: string) => {
+		const newTodo: TypeToDoItem = {
+			id: uuidv4(),
+			title: title,
+			type: 'main',
+			description: description,
+			completed: false,
+		};
+
+		console.log(newTodo.id, typeof newTodo.id);
+
+		this.todos.push(newTodo);
 	};
 
-	removeTodo = (id: number) => {
+	removeTodo = (id: string) => {
 		this.todos = this.todos.filter((todo) => todo.id !== id);
 
 		// Remove from subtasks if needed
@@ -57,7 +73,7 @@ class TodoStore {
 	};
 
 	private findTodoAndParentById = (
-		id: number,
+		id: string,
 		todos: TypeToDoItem[],
 		parent: TypeToDoItem | null = null
 	): { todo: TypeToDoItem | undefined; parent: TypeToDoItem | null } => {
@@ -91,7 +107,7 @@ class TodoStore {
 		});
 	};
 
-	completeToDo = (id: number) => {
+	completeToDo = (id: string) => {
 		const { todo } = this.findTodoAndParentById(id, this.todos);
 		if (todo) {
 			todo.completed = !todo.completed;

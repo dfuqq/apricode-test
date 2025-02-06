@@ -3,11 +3,11 @@ import todoStore from '../stores/todo-store';
 import { ToDoItem } from './todo-item';
 
 export const ToDoList = observer(() => {
-	const handleComplete = (id: number) => {
+	const handleComplete = (id: string) => {
 		todoStore.completeToDo(id);
 	};
 
-	const handleRemove = (id: number) => {
+	const handleRemove = (id: string) => {
 		todoStore.removeTodo(id);
 	};
 

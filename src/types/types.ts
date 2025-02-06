@@ -1,5 +1,5 @@
 interface TypeToDoSubItem {
-	id: number;
+	id: string;
 	title: string;
 	description?: string;
 	type: 'sub';
@@ -7,7 +7,7 @@ interface TypeToDoSubItem {
 }
 
 interface TypeToDoMainItem {
-	id: number;
+	id: string;
 	title: string;
 	description?: string;
 	type: 'main';
