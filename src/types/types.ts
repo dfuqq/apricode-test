@@ -1,4 +1,4 @@
-interface TypeToDoSubItem {
+export interface TypeToDoSubItem {
 	id: string;
 	title: string;
 	description?: string;

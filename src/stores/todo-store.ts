@@ -1,43 +1,21 @@
-import { makeAutoObservable } from 'mobx';
-import { TypeToDoItem } from '../types/types';
+import { makeAutoObservable, reaction } from 'mobx';
+import { TypeToDoItem, TypeToDoSubItem } from '../types/types';
 import { v4 as uuidv4 } from 'uuid';
 
 class TodoStore {
-	todos: TypeToDoItem[] = [
-		{
-			id: '1',
-			title: 'Test 1',
-			description: 'This is a test 1 description',
-			completed: false,
-			type: 'main',
-			subtasks: [
-				{
-					id: '4',
-					title: 'test4',
-					completed: false,
-					description: 'subtask for task 1',
-					type: 'sub',
-				},
-				{
-					id: '5',
-					title: 'test5',
-					completed: false,
-					type: 'sub',
-				},
-			],
-		},
-		{
-			id: '2',
-			title: 'Test 2',
-			description: 'Test 2 desc',
-			type: 'main',
-			completed: false,
-		},
-		{ id: '3', title: 'Test 3', type: 'main', completed: true },
-	];
+	todos: TypeToDoItem[] = [];
 
 	constructor() {
 		makeAutoObservable(this);
+		this.loadFromLocalStorage();
+
+		// Auto Save to localStorage when todos array changes
+		reaction(
+			() => this.todos,
+			(todos) => {
+				localStorage.setItem('todos', JSON.stringify(todos));
+			}
+		);
 	}
 
 	/**
@@ -54,9 +32,7 @@ class TodoStore {
 			completed: false,
 		};
 
-		console.log(newTodo.id, typeof newTodo.id);
-
-		this.todos.push(newTodo);
+		this.todos = [...this.todos, newTodo];
 	};
 
 	removeTodo = (id: string) => {
@@ -114,6 +90,43 @@ class TodoStore {
 
 			if (todo.type === 'main' && todo.subtasks) {
 				this.completeAllSubtasks(todo.subtasks, todo.completed);
+			}
+		}
+	};
+
+	private loadFromLocalStorage = () => {
+		const todosLocal = localStorage.getItem('todos');
+		if (todosLocal) {
+			try {
+				const parsedTodos = JSON.parse(todosLocal) as TypeToDoItem[];
+
+				// Need to rehydrate the todos that were loaded from localstorage, localstorage doesn't retain prototypes
+				this.todos = parsedTodos.map((todo) => {
+					// Type check and assign back to it
+					if (todo.type === 'main' && todo.subtasks) {
+						return {
+							...todo,
+							subtasks: todo.subtasks.map(
+								(subtask: TypeToDoSubItem) => {
+									return {
+										...(subtask as TypeToDoSubItem),
+									};
+								}
+							),
+						};
+					}
+					// Otherwise simply re-assign the props back
+					return {
+						...(todo as TypeToDoItem),
+					};
+				});
+			} catch (error) {
+				console.error(
+					'Error loading or parsing todos from local storage:',
+					error
+				);
+				// Optionally, clear the invalid data from local storage:
+				localStorage.removeItem('todos');
 			}
 		}
 	};
