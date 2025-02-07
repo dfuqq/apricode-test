@@ -19,7 +19,7 @@ class TodoStore {
 	}
 
 	/**
-	 * A function for adding new todo to MobX, default 'main' subtask
+	 * A function for adding new todo to MobX, default 'main' task
 	 * @param title the title of todo
 	 * @param description description for todo
 	 */
@@ -33,6 +33,34 @@ class TodoStore {
 		};
 
 		this.todos = [...this.todos, newTodo];
+	};
+
+	addSubTodo = (
+		parentTodoId: string,
+		title: string,
+		description?: string
+	) => {
+		const newTodo: TypeToDoItem = {
+			id: uuidv4(),
+			title,
+			type: 'sub',
+			description,
+			completed: false,
+		};
+
+		this.todos = this.todos.map((todo) => {
+			if (todo.id === parentTodoId) {
+				if (todo.type === 'main') {
+					const updatedTodo: TypeToDoItem = {
+						...todo,
+						subtasks: [...(todo.subtasks || []), newTodo], // Add to existing or create new
+					};
+
+					return updatedTodo;
+				}
+			}
+			return todo;
+		});
 	};
 
 	removeTodo = (id: string) => {
@@ -65,8 +93,6 @@ class TodoStore {
 					todo
 				);
 				if (result.todo) {
-					console.log(result);
-
 					return result;
 				}
 			}
@@ -84,14 +110,20 @@ class TodoStore {
 	};
 
 	completeToDo = (id: string) => {
-		const { todo } = this.findTodoAndParentById(id, this.todos);
-		if (todo) {
-			todo.completed = !todo.completed;
-
-			if (todo.type === 'main' && todo.subtasks) {
-				this.completeAllSubtasks(todo.subtasks, todo.completed);
+		this.todos = this.todos.map((todo) => {
+			if (todo.id === id) {
+				// Create a *new* object with the toggled completed state.
+				return { ...todo, completed: !todo.completed };
 			}
-		}
+			return todo; // Return the original todo if it's not the one we're updating.
+		});
+
+		// If it's a main task and completing, complete all subtasks
+		this.todos.forEach((todo) => {
+			if (todo.type === 'main' && todo.id === id && todo.subtasks) {
+				this.completeAllSubtasks(todo.subtasks, todo.completed); // The completed flag has already been toggled
+			}
+		});
 	};
 
 	private loadFromLocalStorage = () => {
