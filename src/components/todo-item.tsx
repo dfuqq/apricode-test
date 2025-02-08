@@ -1,7 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import { TypeToDoItem } from '../types/types';
-import { useState } from 'react';
-import todoStore from '../stores/todo-store';
+import { ToDoAddSub } from './todo-add-sub';
 
 interface Props {
 	todo: TypeToDoItem;
@@ -10,103 +9,58 @@ interface Props {
 }
 
 export const ToDoItem = observer(({ todo, onComplete, onRemove }: Props) => {
-	const [newSubTodoTitle, setNewSubTodoTitle] = useState('');
-	const [newSubTodoDescription, setNewSubTodoDescription] = useState('');
-	const [isAddingNewSub, setIsAddingNewSub] = useState(false);
-
-	const handleAddSubTodo = () => {
-		if (newSubTodoTitle) {
-			todoStore.addSubTodo(
-				todo.id,
-				newSubTodoTitle,
-				newSubTodoDescription
-			);
-		}
-		setNewSubTodoTitle('');
-		setNewSubTodoDescription('');
-		setIsAddingNewSub(false);
-	};
-
 	return (
-		<div className='flex items-center gap-2 my-4 border rounded-md p-2 border-gray-400 bg-white hover:bg-slate-50 grow select-none'>
-			<label className='flex-grow flex items-center gap-2'>
-				<input
-					type='checkbox'
-					checked={todo.completed}
-					onChange={() => onComplete(todo.id)}
-					className='scale-125 mx-2'
-				/>
+		<div className='border rounded-md p-4 my-2 bg-white shadow-md'>
+			<div className='flex items-start justify-between'>
+				<div className='flex items-center w-full'>
+					<input
+						type='checkbox'
+						checked={todo.completed}
+						onChange={() => onComplete(todo.id)}
+						className='mr-2 h-5 w-5 text-blue-500 focus:ring-blue-500'
+					/>
+					<div
+						className={`w-full ${
+							todo.completed
+								? 'line-through text-gray-500'
+								: 'text-gray-900'
+						}`}>
+						<h2 className='font-semibold'>{todo.title}</h2>
+						{todo.description && (
+							<p className='text-sm text-gray-600'>
+								{todo.description}
+							</p>
+						)}
 
-				<div
-					className={`w-full ${
-						todo.completed ? 'line-through' : ''
-					}`}>
-					<h2 className='font-semibold text-gray-900'>
-						{todo.title}
-					</h2>
-					{todo.description && (
-						<p className='text-gray-500 text-sm'>
-							{todo.description}
-						</p>
-					)}
-
-					{todo.type === 'main' &&
-						todo?.subtasks?.map((subtask) => (
-							<ToDoItem
-								key={subtask.id}
-								todo={subtask}
-								onComplete={onComplete}
-								onRemove={onRemove}
-							/>
-						))}
+						<ToDoAddSub todo={todo} />
+					</div>
 				</div>
-			</label>
-			{/* FIXME: X goes line-through when main completed */}
-			<div
-				className='cursor-pointer m-2'
-				onClick={() => onRemove(todo.id)}>
-				<p>❌</p>
+
+				{todo.type === 'main' && todo.subtasks ? (
+					<div
+						onClick={() => onRemove(todo.id)}
+						className='cursor-pointer text-gray-600 hover:text-red-500'>
+						❌
+					</div>
+				) : (
+					<div
+						onClick={() => onRemove(todo.id)}
+						className='cursor-pointer text-gray-600 hover:text-red-500 mt-1'>
+						❌
+					</div>
+				)}
 			</div>
 
-			{/* TODO: Separate */}
-			{todo.type === 'main' && (
-				<div>
-					{!isAddingNewSub ? (
-						<button
-							onClick={() => setIsAddingNewSub(true)}
-							className='border-2 p-2'>
-							Add new Sub
-						</button>
-					) : (
-						<div>
-							<input
-								type='text'
-								value={newSubTodoTitle}
-								onChange={(e) =>
-									setNewSubTodoTitle(e.target.value)
-								}
-								placeholder='Title...'
-								className='gap-2 my-4 border rounded-md p-2 m-4 border-gray-400 bg-white hover:bg-slate-50 grow select-none'
-							/>
-							{newSubTodoTitle && (
-								<input
-									type='text'
-									value={newSubTodoDescription}
-									onChange={(e) =>
-										setNewSubTodoDescription(e.target.value)
-									}
-									placeholder='Description...'
-									className='gap-2 my-4 border rounded-md p-2 m-4 border-gray-400 bg-white hover:bg-slate-50 grow select-none'
-								/>
-							)}
-							<button
-								onClick={handleAddSubTodo}
-								className='border-2 p-2 disabled:bg-red-500'
-								disabled={!newSubTodoTitle}>
-								Save Subtodo
-							</button>
-						</div>
-					)}
+			{todo.type === 'main' && todo.subtasks && (
+				<div className='ml-6 mt-2'>
+					{todo.subtasks.map((subtask) => (
+						<ToDoItem
+							key={subtask.id}
+							todo={subtask}
+							onComplete={onComplete}
+							onRemove={onRemove}
+						/>
+					))}
 				</div>
 			)}
 		</div>

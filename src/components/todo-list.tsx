@@ -12,7 +12,7 @@ export const ToDoList = observer(() => {
 	};
 
 	return (
-		<div className='flex-col items-center gap-1'>
+		<div className='flex-col items-center gap-1 w-full bg-red-100 rounded-md p-6'>
 			{todoStore.todos.map((item) => (
 				<ToDoItem
 					key={item.id}
@@ -21,6 +21,9 @@ export const ToDoList = observer(() => {
 					onRemove={handleRemove}
 				/>
 			))}
+			{!todoStore.todos.length && (
+				<h3 className='text-center'>No Todos Yet!</h3>
+			)}
 		</div>
 	);
 });
