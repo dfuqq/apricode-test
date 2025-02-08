@@ -36,7 +36,7 @@ export const ToDoItem = observer(({ todo, onComplete, onRemove }: Props) => {
 					</div>
 				</div>
 
-				{todo.type === 'main' && todo.subtasks ? (
+				{todo.subtasks ? (
 					<div
 						onClick={() => onRemove(todo.id)}
 						className='cursor-pointer text-gray-600 hover:text-red-500'>
@@ -51,7 +51,7 @@ export const ToDoItem = observer(({ todo, onComplete, onRemove }: Props) => {
 				)}
 			</div>
 
-			{todo.type === 'main' && todo.subtasks && (
+			{todo.subtasks && (
 				<div className='ml-6 mt-2'>
 					{todo.subtasks.map((subtask) => (
 						<ToDoItem

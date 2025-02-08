@@ -1,5 +1,5 @@
 import { makeAutoObservable, reaction } from 'mobx';
-import { TypeToDoItem, TypeToDoSubItem } from '../types/types';
+import { TypeToDoItem } from '../types/types';
 import { v4 as uuidv4 } from 'uuid';
 
 class TodoStore {
@@ -27,9 +27,9 @@ class TodoStore {
 		const newTodo: TypeToDoItem = {
 			id: uuidv4(),
 			title: title,
-			type: 'main',
 			description: description,
 			completed: false,
+			subtasks: [],
 		};
 
 		this.todos = [...this.todos, newTodo];
@@ -43,61 +43,54 @@ class TodoStore {
 		const newTodo: TypeToDoItem = {
 			id: uuidv4(),
 			title,
-			type: 'sub',
 			description,
 			completed: false,
+			subtasks: [],
 		};
 
-		this.todos = this.todos.map((todo) => {
-			if (todo.id === parentTodoId) {
-				if (todo.type === 'main') {
-					const updatedTodo: TypeToDoItem = {
-						...todo,
-						subtasks: [...(todo.subtasks || []), newTodo], // Add to existing or create new
-					};
+		this.todos = this.todos.map((todo) =>
+			this.recursivelyAddSubTodo(todo, parentTodoId, newTodo)
+		);
+	};
 
-					return updatedTodo;
-				}
-			}
-			return todo;
-		});
+	private recursivelyAddSubTodo = (
+		todo: TypeToDoItem,
+		parentTodoId: string,
+		newTodo: TypeToDoItem
+	): TypeToDoItem => {
+		if (todo.id === parentTodoId) {
+			return { ...todo, subtasks: [...(todo.subtasks || []), newTodo] };
+		}
+
+		if (todo.subtasks) {
+			const updatedSubtasks = todo.subtasks.map((subtask) =>
+				this.recursivelyAddSubTodo(subtask, parentTodoId, newTodo)
+			);
+			return { ...todo, subtasks: updatedSubtasks };
+		}
+
+		return todo;
 	};
 
 	removeTodo = (id: string) => {
-		this.todos = this.todos.filter((todo) => todo.id !== id);
-
-		// Remove from subtasks if needed
-		this.todos.forEach((todo) => {
-			if (todo.type === 'main' && todo.subtasks) {
-				todo.subtasks = todo.subtasks.filter(
-					(subtask) => subtask.id !== id
-				);
-			}
-		});
+		this.todos = this.recursivelyRemoveTodo(this.todos, id);
 	};
 
-	private findTodoAndParentById = (
-		id: string,
+	private recursivelyRemoveTodo = (
 		todos: TypeToDoItem[],
-		parent: TypeToDoItem | null = null
-	): { todo: TypeToDoItem | undefined; parent: TypeToDoItem | null } => {
-		for (const todo of todos) {
-			if (todo.id === id) {
-				return { todo, parent };
-			}
-
-			if (todo.type === 'main' && todo.subtasks) {
-				const result = this.findTodoAndParentById(
-					id,
-					todo.subtasks,
-					todo
-				);
-				if (result.todo) {
-					return result;
+		id: string
+	): TypeToDoItem[] => {
+		return todos
+			.filter((todo) => todo.id !== id) // Filter out the todo to remove
+			.map((todo) => {
+				if (todo.subtasks) {
+					return {
+						...todo,
+						subtasks: this.recursivelyRemoveTodo(todo.subtasks, id),
+					}; // Recursively filter subtasks
 				}
-			}
-		}
-		return { todo: undefined, parent };
+				return todo;
+			});
 	};
 
 	private completeAllSubtasks = (
@@ -106,24 +99,38 @@ class TodoStore {
 	) => {
 		subtasks.forEach((subtask) => {
 			subtask.completed = completed;
+			if (subtask.subtasks) {
+				this.completeAllSubtasks(subtask.subtasks, completed); // Recursive call
+			}
 		});
 	};
 
 	completeToDo = (id: string) => {
-		this.todos = this.todos.map((todo) => {
-			if (todo.id === id) {
-				// Create a *new* object with the toggled completed state.
-				return { ...todo, completed: !todo.completed };
-			}
-			return todo; // Return the original todo if it's not the one we're updating.
-		});
+		this.todos = this.todos.map((todo) =>
+			this.recursivelyCompleteTodo(todo, id)
+		);
+	};
 
-		// If it's a main task and completing, complete all subtasks
-		this.todos.forEach((todo) => {
-			if (todo.type === 'main' && todo.id === id && todo.subtasks) {
-				this.completeAllSubtasks(todo.subtasks, todo.completed); // The completed flag has already been toggled
+	private recursivelyCompleteTodo = (
+		todo: TypeToDoItem,
+		id: string
+	): TypeToDoItem => {
+		if (todo.id === id) {
+			const completed = !todo.completed; // Toggle completed state
+			if (todo.subtasks) {
+				this.completeAllSubtasks(todo.subtasks, completed); // Complete all subtasks
 			}
-		});
+			return { ...todo, completed: completed };
+		}
+
+		if (todo.subtasks) {
+			const updatedSubtasks = todo.subtasks.map((subtask) =>
+				this.recursivelyCompleteTodo(subtask, id)
+			);
+			return { ...todo, subtasks: updatedSubtasks };
+		}
+
+		return todo;
 	};
 
 	private loadFromLocalStorage = () => {
@@ -132,32 +139,12 @@ class TodoStore {
 			try {
 				const parsedTodos = JSON.parse(todosLocal) as TypeToDoItem[];
 
-				// Need to rehydrate the todos that were loaded from localstorage, localstorage doesn't retain prototypes
-				this.todos = parsedTodos.map((todo) => {
-					// Type check and assign back to it
-					if (todo.type === 'main' && todo.subtasks) {
-						return {
-							...todo,
-							subtasks: todo.subtasks.map(
-								(subtask: TypeToDoSubItem) => {
-									return {
-										...(subtask as TypeToDoSubItem),
-									};
-								}
-							),
-						};
-					}
-					// Otherwise simply re-assign the props back
-					return {
-						...(todo as TypeToDoItem),
-					};
-				});
+				this.todos = parsedTodos;
 			} catch (error) {
 				console.error(
 					'Error loading or parsing todos from local storage:',
 					error
 				);
-				// Optionally, clear the invalid data from local storage:
 				localStorage.removeItem('todos');
 			}
 		}

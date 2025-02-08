@@ -53,14 +53,13 @@ export const ToDoAddSub = observer(({ todo }: Props) => {
 					</button>
 				</form>
 			) : (
-				todo.type === 'main' && (
-					<button
-						onClick={() => setIsAddingNewSub(true)}
-						disabled={todo.completed}
-						className='hover:bg-gray-300 rounded text-sm p-2 bg-blue-500 text-white cursor-pointer disabled:cursor-not-allowed'>
-						Add Subtask
-					</button>
-				)
+				// TODO: disabled styling
+				<button
+					onClick={() => setIsAddingNewSub(true)}
+					disabled={todo.completed}
+					className='hover:bg-gray-300 rounded text-sm p-2 bg-blue-500 text-white cursor-pointer disabled:cursor-not-allowed'>
+					Add Subtask
+				</button>
 			)}
 		</>
 	);
