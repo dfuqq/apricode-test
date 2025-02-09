@@ -1,6 +1,6 @@
 import { makeAutoObservable, reaction } from 'mobx';
-import { TypeToDoItem } from '../types/types';
 import { v4 as uuidv4 } from 'uuid';
+import { TypeToDoItem } from '../types/types';
 
 class TodoStore {
 	todos: TypeToDoItem[] = [];
@@ -81,56 +81,126 @@ class TodoStore {
 		id: string
 	): TypeToDoItem[] => {
 		return todos
-			.filter((todo) => todo.id !== id) // Filter out the todo to remove
+			.filter((todo) => todo.id !== id)
 			.map((todo) => {
 				if (todo.subtasks) {
 					return {
 						...todo,
 						subtasks: this.recursivelyRemoveTodo(todo.subtasks, id),
-					}; // Recursively filter subtasks
+					};
 				}
 				return todo;
 			});
 	};
 
-	private completeAllSubtasks = (
-		subtasks: TypeToDoItem[],
-		completed: boolean
-	) => {
-		subtasks.forEach((subtask) => {
-			subtask.completed = completed;
-			if (subtask.subtasks) {
-				this.completeAllSubtasks(subtask.subtasks, completed); // Recursive call
-			}
-		});
-	};
-
 	completeToDo = (id: string) => {
-		this.todos = this.todos.map((todo) =>
-			this.recursivelyCompleteTodo(todo, id)
-		);
+		this.todos = this.recursivelyCompleteTodo(this.todos, id); // Assign the result back to this.todos
 	};
 
 	private recursivelyCompleteTodo = (
-		todo: TypeToDoItem,
+		todos: TypeToDoItem[],
 		id: string
-	): TypeToDoItem => {
-		if (todo.id === id) {
-			const completed = !todo.completed; // Toggle completed state
-			if (todo.subtasks) {
-				this.completeAllSubtasks(todo.subtasks, completed); // Complete all subtasks
+	): TypeToDoItem[] => {
+		return todos
+			.map((todo) => {
+				if (todo.id === id) {
+					const newCompleted = !todo.completed;
+					let updatedTodo = { ...todo, completed: newCompleted };
+
+					if (updatedTodo.subtasks) {
+						updatedTodo = {
+							...updatedTodo,
+							subtasks: this.completeAllSubtasks(
+								updatedTodo.subtasks,
+								newCompleted
+							),
+						};
+					}
+					return updatedTodo;
+				}
+
+				if (todo.subtasks) {
+					return {
+						...todo,
+						subtasks: this.recursivelyCompleteTodo(
+							todo.subtasks,
+							id
+						),
+					};
+				}
+
+				return todo;
+			})
+			.map((todo) => this.updateParentCompletion(todo)); // Chain to update parents
+	};
+
+	private completeAllSubtasks = (
+		subtasks: TypeToDoItem[],
+		completed: boolean
+	): TypeToDoItem[] => {
+		return subtasks.map((subtask) => {
+			let updatedSubtask = { ...subtask, completed: completed };
+			if (updatedSubtask.subtasks) {
+				updatedSubtask = {
+					...updatedSubtask,
+					subtasks: this.completeAllSubtasks(
+						updatedSubtask.subtasks,
+						completed
+					),
+				};
 			}
-			return { ...todo, completed: completed };
-		}
+			return updatedSubtask;
+		});
+	};
 
-		if (todo.subtasks) {
-			const updatedSubtasks = todo.subtasks.map((subtask) =>
-				this.recursivelyCompleteTodo(subtask, id)
+	private updateParentCompletion = (todo: TypeToDoItem): TypeToDoItem => {
+		if (todo.subtasks && todo.subtasks.length > 0) {
+			const allSubtasksCompleted = todo.subtasks.every(
+				(subtask) => subtask.completed
 			);
-			return { ...todo, subtasks: updatedSubtasks };
+			if (todo.completed !== allSubtasksCompleted) {
+				return { ...todo, completed: allSubtasksCompleted };
+			}
 		}
-
 		return todo;
+	};
+
+	editTodo = (id: string, newTitle: string, newDescription?: string) => {
+		this.todos = this.recursivelyEditTodo(
+			this.todos,
+			id,
+			newTitle,
+			newDescription
+		);
+	};
+
+	private recursivelyEditTodo = (
+		todos: TypeToDoItem[],
+		id: string,
+		newTitle: string,
+		newDescription?: string
+	): TypeToDoItem[] => {
+		return todos.map((todo) => {
+			if (todo.id === id) {
+				return {
+					...todo,
+					title: newTitle,
+					description: newDescription,
+				};
+			}
+			if (todo.subtasks) {
+				return {
+					...todo,
+					subtasks: this.recursivelyEditTodo(
+						todo.subtasks,
+						id,
+						newTitle,
+						newDescription
+					),
+				};
+			}
+			return todo;
+		});
 	};
 
 	private loadFromLocalStorage = () => {
@@ -138,7 +208,6 @@ class TodoStore {
 		if (todosLocal) {
 			try {
 				const parsedTodos = JSON.parse(todosLocal) as TypeToDoItem[];
-
 				this.todos = parsedTodos;
 			} catch (error) {
 				console.error(
