@@ -35,7 +35,7 @@ export const ToDoAddSub = observer(({ todo }: Props) => {
 						value={newSubTodoTitle}
 						onChange={(e) => setNewSubTodoTitle(e.target.value)}
 						placeholder='Subtask title'
-						className='border rounded p-2 m-2 flex-grow focus:outline-none'
+						className='border rounded p-2 m-2 flex-grow focus:outline-none text-black'
 					/>
 					<input
 						type='text'
@@ -43,8 +43,8 @@ export const ToDoAddSub = observer(({ todo }: Props) => {
 						onChange={(e) =>
 							setNewSubTodoDescription(e.target.value)
 						}
-						placeholder='Subtask description'
-						className='border rounded p-2 m-2 flex-grow focus:outline-none'
+						placeholder='Subtask optional description'
+						className='border rounded p-2 m-2 flex-grow focus:outline-none text-black'
 					/>
 					<button
 						onClick={handleAddSubTodo}
@@ -57,7 +57,7 @@ export const ToDoAddSub = observer(({ todo }: Props) => {
 				<button
 					onClick={() => setIsAddingNewSub(true)}
 					disabled={todo.completed}
-					className='hover:bg-gray-300 rounded text-sm p-2 bg-blue-500 text-white cursor-pointer disabled:cursor-not-allowed'>
+					className='hover:bg-gray-300 rounded text-sm p-2 mt-1 bg-blue-500 text-white cursor-pointer disabled:cursor-not-allowed'>
 					Add Subtask
 				</button>
 			)}

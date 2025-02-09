@@ -16,7 +16,7 @@ export const ToDoAdd = () => {
 			<input
 				type='text'
 				value={newTodo}
-				className='outline-none m-4 p-2 rounded-md border-2 transition-colors duration-100 border-solid focus:border-[#596A95] border-[#2B3040] select-none'
+				className='outline-none m-4 p-2 rounded-md border-2 transition-colors duration-100 border-solid focus:border-gray-200 border-white select-none'
 				onChange={(e) => setNewTodo(e.target.value)}
 				placeholder='Title...'
 			/>
@@ -25,9 +25,9 @@ export const ToDoAdd = () => {
 					<input
 						type='text'
 						value={newDescription}
-						className='outline-none m-4 p-2 rounded-md border-2 transition-colors duration-100 border-solid focus:border-[#596A95] border-[#2B3040] select-none'
+						className='outline-none m-4 p-2 rounded-md border-2 transition-colors duration-100 border-solid focus:border-gray-200 border-white select-none'
 						onChange={(e) => setNewDescription(e.target.value)}
-						placeholder='Description...'
+						placeholder='Optional Description...'
 					/>
 				</>
 			)}
