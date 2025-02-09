@@ -29,7 +29,7 @@ export const ToDoAddSub = observer(({ todo }: Props) => {
 	return (
 		<>
 			{isAddingNewSub ? (
-				<form className='flex items-center'>
+				<form className='flex items-center my-1'>
 					<input
 						type='text'
 						value={newSubTodoTitle}
