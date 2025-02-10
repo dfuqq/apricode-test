@@ -21,7 +21,7 @@ class TodoStore {
 	/**
 	 * A function for adding new todo to MobX, default 'main' task
 	 * @param title the title of todo
-	 * @param description description for todo
+	 * @param description description for todo (optional)
 	 */
 	addTodo = (title: string, description?: string) => {
 		const newTodo: TypeToDoItem = {
@@ -35,6 +35,12 @@ class TodoStore {
 		this.todos = [...this.todos, newTodo];
 	};
 
+	/**
+	 * A function for adding new sub todo
+	 * @param parentTodoId main task which we attaching subtask
+	 * @param title the title of sub todo
+	 * @param description description of sub todo (optional)
+	 */
 	addSubTodo = (
 		parentTodoId: string,
 		title: string,
@@ -53,6 +59,13 @@ class TodoStore {
 		);
 	};
 
+	/**
+	 *
+	 * @param todo where attach new subtask
+	 * @param parentTodoId whom the main task is
+	 * @param newTodo new subtask with TypeToDoItem
+	 * @returns new object with nested subtasks
+	 */
 	private recursivelyAddSubTodo = (
 		todo: TypeToDoItem,
 		parentTodoId: string,
@@ -76,6 +89,12 @@ class TodoStore {
 		this.todos = this.recursivelyRemoveTodo(this.todos, id);
 	};
 
+	/**
+	 * Filters out initial object and returns new ones without given task
+	 * @param todos
+	 * @param id
+	 * @returns
+	 */
 	private recursivelyRemoveTodo = (
 		todos: TypeToDoItem[],
 		id: string
@@ -94,9 +113,15 @@ class TodoStore {
 	};
 
 	completeToDo = (id: string) => {
-		this.todos = this.recursivelyCompleteTodo(this.todos, id); // Assign the result back to this.todos
+		this.todos = this.recursivelyCompleteTodo(this.todos, id);
 	};
 
+	/**
+	 * Finds out task and changes state of checked, gets it to subtasks if needed
+	 * @param todos
+	 * @param id
+	 * @returns
+	 */
 	private recursivelyCompleteTodo = (
 		todos: TypeToDoItem[],
 		id: string
@@ -153,6 +178,11 @@ class TodoStore {
 		});
 	};
 
+	/**
+	 * Finds out where all subtasks completed and checks main task as completed
+	 * @param todo
+	 * @returns
+	 */
 	private updateParentCompletion = (todo: TypeToDoItem): TypeToDoItem => {
 		if (todo.subtasks && todo.subtasks.length > 0) {
 			const allSubtasksCompleted = todo.subtasks.every(
@@ -165,6 +195,12 @@ class TodoStore {
 		return todo;
 	};
 
+	/**
+	 * A function for editing note
+	 * @param id task's id
+	 * @param newTitle can be either same as old, or completely new
+	 * @param newDescription can be either same as old, or completely new (optional)
+	 */
 	editTodo = (id: string, newTitle: string, newDescription?: string) => {
 		this.todos = this.recursivelyEditTodo(
 			this.todos,
@@ -174,6 +210,14 @@ class TodoStore {
 		);
 	};
 
+	/**
+	 * Finds out task by id and changes it's title + description
+	 * @param todos
+	 * @param id
+	 * @param newTitle
+	 * @param newDescription
+	 * @returns object with updated content
+	 */
 	private recursivelyEditTodo = (
 		todos: TypeToDoItem[],
 		id: string,
